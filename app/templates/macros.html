@@ -1,0 +1,17 @@
+{# Reusable macro for status badges #}
+{% macro status_badge(label, color) %}
+<span class="inline-flex items-center gap-1 rounded-full bg-{{ color }}-100 text-{{ color }}-700 px-2.5 py-0.5 text-xs font-medium">
+  {{ label }}
+</span>
+{% endmacro %}
+
+{# Reusable macro for stok status badge #}
+{% macro stok_badge(status) %}
+{% if status == 'habis' %}
+<span class="inline-flex items-center gap-1 rounded-full bg-danger-100 text-danger-700 px-2.5 py-0.5 text-xs font-medium">Stok Habis</span>
+{% elif status == 'minimum' %}
+<span class="inline-flex items-center gap-1 rounded-full bg-warning-100 text-warning-700 px-2.5 py-0.5 text-xs font-medium">Stok Minimum</span>
+{% else %}
+<span class="inline-flex items-center gap-1 rounded-full bg-success-100 text-success-700 px-2.5 py-0.5 text-xs font-medium">Stok Aman</span>
+{% endif %}
+{% endmacro %}

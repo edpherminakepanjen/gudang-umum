@@ -1,0 +1,72 @@
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+@page { size: A4; margin: 1.5cm; }
+body { font-family: Helvetica, sans-serif; font-size: 10px; color: #1e293b; }
+.header { text-align: center; margin-bottom: 16px; border-bottom: 2px solid #1e3a8a; padding-bottom: 8px; }
+.header h1 { font-size: 16px; color: #1e3a8a; margin: 0; }
+.header h2 { font-size: 12px; margin: 4px 0 0; }
+.header p { font-size: 9px; color: #64748b; margin: 2px 0 0; }
+h3 { font-size: 11px; color: #1e3a8a; margin: 14px 0 6px; }
+table { width: 100%; border-collapse: collapse; margin-top: 4px; }
+th { background: #1e3a8a; color: white; padding: 5px 6px; text-align: left; font-size: 8px; }
+td { padding: 4px 6px; border-bottom: 1px solid #e2e8f0; }
+.right { text-align: right; }
+.section { margin-bottom: 10px; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>RS HERMINA KEPANJEN</h1>
+  <h2>LAPORAN MUTASI BARANG GUDANG UMUM</h2>
+  <p>Periode: {{ fmt_date_full(start) }} s/d {{ fmt_date_full(end) }}</p>
+</div>
+
+<div class="section">
+<h3>BARANG MASUK</h3>
+<table>
+  <thead><tr><th>No. Faktur</th><th>Tanggal</th><th>Supplier</th><th>Barang</th><th class="right">Qty</th><th>Satuan</th></tr></thead>
+  <tbody>
+    {% for bm in masuk %}
+    {% for d in bm.details %}
+    <tr>
+      <td>{{ bm.no_faktur }}</td>
+      <td>{{ fmt_date(bm.tanggal) }}</td>
+      <td>{{ bm.supplier.nama }}</td>
+      <td>{{ d.barang.nama }}</td>
+      <td class="right">+{{ d.qty }}</td>
+      <td>{{ d.barang.satuan.kode }}</td>
+    </tr>
+    {% endfor %}
+    {% else %}
+    <tr><td colspan="6" style="text-align:center;color:#94a3b8;">Tidak ada data</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+
+<div class="section">
+<h3>BARANG KELUAR</h3>
+<table>
+  <thead><tr><th>No. Permintaan</th><th>Tanggal</th><th>Unit</th><th>Barang</th><th class="right">Qty</th><th>Satuan</th></tr></thead>
+  <tbody>
+    {% for p in keluar %}
+    {% for d in p.details %}
+    <tr>
+      <td>{{ p.no_permintaan }}</td>
+      <td>{{ fmt_date(p.tanggal) }}</td>
+      <td>{{ p.unit.nama }}</td>
+      <td>{{ d.barang.nama }}</td>
+      <td class="right">-{{ d.qty_diproses }}</td>
+      <td>{{ d.barang.satuan.kode }}</td>
+    </tr>
+    {% endfor %}
+    {% else %}
+    <tr><td colspan="6" style="text-align:center;color:#94a3b8;">Tidak ada data</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+</body>
+</html>

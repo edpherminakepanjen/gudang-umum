@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+{% from "macros.html" import status_badge, stok_badge %}
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+{# KPI Cards #}
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+  <div class="bg-white rounded-xl border border-slate-200 p-5 hover:shadow-md transition">
+    <div class="flex items-center justify-between">
+      <div>
+        <p class="text-sm text-slate-500 font-medium">Total Jenis Barang</p>
+        <p class="text-2xl font-bold text-slate-800 mt-1">{{ total_jenis }}</p>
+      </div>
+      <div class="w-12 h-12 rounded-xl bg-primary-100 flex items-center justify-center">
+        <svg class="w-6 h-6 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-xl border border-slate-200 p-5 hover:shadow-md transition">
+    <div class="flex items-center justify-between">
+      <div>
+        <p class="text-sm text-slate-500 font-medium">Total Nilai Stok</p>
+        <p class="text-2xl font-bold text-slate-800 mt-1">{{ fmt_rupiah(total_nilai) }}</p>
+      </div>
+      <div class="w-12 h-12 rounded-xl bg-success-100 flex items-center justify-center">
+        <svg class="w-6 h-6 text-success-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-xl border border-slate-200 p-5 hover:shadow-md transition">
+    <div class="flex items-center justify-between">
+      <div>
+        <p class="text-sm text-slate-500 font-medium">
+          {% if current_user.is_admin %}Permintaan Pending{% else %}Permintaan Aktif{% endif %}
+        </p>
+        <p class="text-2xl font-bold text-slate-800 mt-1">{{ pending_count }}</p>
+      </div>
+      <div class="w-12 h-12 rounded-xl bg-warning-100 flex items-center justify-center">
+        <svg class="w-6 h-6 text-warning-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-xl border border-slate-200 p-5 hover:shadow-md transition">
+    <div class="flex items-center justify-between">
+      <div>
+        <p class="text-sm text-slate-500 font-medium">Stok di Bawah Minimum</p>
+        <p class="text-2xl font-bold text-slate-800 mt-1">{{ below_min }}</p>
+      </div>
+      <div class="w-12 h-12 rounded-xl bg-danger-100 flex items-center justify-center">
+        <svg class="w-6 h-6 text-danger-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+      </div>
+    </div>
+  </div>
+</div>
+
+{# Charts row #}
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+  <div class="lg:col-span-2 bg-white rounded-xl border border-slate-200 p-5">
+    <h3 class="font-semibold text-slate-800 mb-1">Tren Barang Masuk vs Keluar</h3>
+    <p class="text-sm text-slate-500 mb-4">6 bulan terakhir</p>
+    <div class="h-64">
+      <canvas id="chartTrend"></canvas>
+    </div>
+  </div>
+
+  {% if current_user.is_admin and top_items %}
+  <div class="bg-white rounded-xl border border-slate-200 p-5">
+    <h3 class="font-semibold text-slate-800 mb-1">Barang Paling Sering Diminta</h3>
+    <p class="text-sm text-slate-500 mb-4">Top 7</p>
+    <div class="h-64">
+      <canvas id="chartTopItems"></canvas>
+    </div>
+  </div>
+  {% else %}
+  <div class="bg-white rounded-xl border border-slate-200 p-5">
+    <h3 class="font-semibold text-slate-800 mb-3">Status Permintaan Anda</h3>
+    {% set counts = {'diajukan':0,'disetujui':0,'diproses':0,'selesai':0,'ditolak':0} %}
+    {% for p in recent_permintaan %}
+      {% if counts.update({p.status: (counts[p.status] or 0) + 1}) %}{% endif %}
+    {% endfor %}
+    <div class="space-y-3 mt-4">
+      <div class="flex items-center justify-between">
+        <span class="text-sm text-slate-600">Diajukan</span>
+        <span class="text-sm font-semibold text-warning-700">{{ counts['diajukan'] }}</span>
+      </div>
+      <div class="flex items-center justify-between">
+        <span class="text-sm text-slate-600">Disetujui</span>
+        <span class="text-sm font-semibold text-primary-700">{{ counts['disetujui'] }}</span>
+      </div>
+      <div class="flex items-center justify-between">
+        <span class="text-sm text-slate-600">Selesai</span>
+        <span class="text-sm font-semibold text-success-700">{{ counts['selesai'] }}</span>
+      </div>
+      <div class="flex items-center justify-between">
+        <span class="text-sm text-slate-600">Ditolak</span>
+        <span class="text-sm font-semibold text-danger-700">{{ counts['ditolak'] }}</span>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+{# Low stock alert + recent activity #}
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+  {% if current_user.is_admin %}
+  <div class="bg-white rounded-xl border border-slate-200 p-5">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="font-semibold text-slate-800">Stok di Bawah Minimum</h3>
+      <a href="{{ url_for('monitoring.index') }}" class="text-sm text-primary-600 hover:text-primary-700 font-medium">Lihat semua</a>
+    </div>
+    {% if low_stock %}
+    <div class="space-y-2">
+      {% for b in low_stock %}
+      <div class="flex items-center justify-between py-2 border-b border-slate-100 last:border-0">
+        <div class="min-w-0">
+          <div class="text-sm font-medium text-slate-700 truncate">{{ b.nama }}</div>
+          <div class="text-xs text-slate-400">{{ b.kode }}</div>
+        </div>
+        <div class="flex items-center gap-2 shrink-0">
+          <span class="text-sm font-semibold {% if b.stok <= 0 %}text-danger-600{% else %}text-warning-600{% endif %}">{{ b.stok }} {{ b.satuan.kode }}</span>
+          {{ stok_badge(b.status_stok) }}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="text-sm text-slate-400 py-4 text-center">Semua stok dalam batas aman.</p>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <div class="bg-white rounded-xl border border-slate-200 p-5">
+    <h3 class="font-semibold text-slate-800 mb-4">Aktivitas Terbaru</h3>
+    <div class="space-y-3">
+      {% for p in recent_permintaan %}
+      <div class="flex items-start gap-3">
+        <div class="w-2 h-2 rounded-full bg-primary-500 mt-1.5 shrink-0"></div>
+        <div class="min-w-0 flex-1">
+          <div class="text-sm text-slate-700">
+            Permintaan <span class="font-medium">{{ p.no_permintaan }}</span>
+          </div>
+          <div class="text-xs text-slate-400">
+            {{ fmt_date(p.tanggal) }} — {{ p.status_label }}
+          </div>
+        </div>
+        {{ status_badge(p.status_label, p.status_color) }}
+      </div>
+      {% else %}
+      <p class="text-sm text-slate-400 text-center py-4">Belum ada aktivitas.</p>
+      {% endfor %}
+
+      {% for bm in recent_masuk %}
+      <div class="flex items-start gap-3">
+        <div class="w-2 h-2 rounded-full bg-success-500 mt-1.5 shrink-0"></div>
+        <div class="min-w-0 flex-1">
+          <div class="text-sm text-slate-700">
+            Barang Masuk <span class="font-medium">{{ bm.no_faktur }}</span>
+          </div>
+          <div class="text-xs text-slate-400">{{ fmt_date(bm.tanggal) }} — {{ bm.supplier.nama }}</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+const trendLabels = {{ trend_labels | tojson }};
+const masukData = {{ masuk_data | tojson }};
+const keluarData = {{ keluar_data | tojson }};
+
+new Chart(document.getElementById('chartTrend'), {
+  type: 'bar',
+  data: {
+    labels: trendLabels,
+    datasets: [
+      { label: 'Barang Masuk', data: masukData, backgroundColor: '#2563eb', borderRadius: 6 },
+      { label: 'Barang Keluar', data: keluarData, backgroundColor: '#06b6d4', borderRadius: 6 },
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 8 } } },
+    scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+  }
+});
+
+{% if current_user.is_admin and top_items %}
+const topItems = {{ top_items | map(attribute='0') | list | tojson }};
+const topQty = {{ top_items | map(attribute='1') | list | tojson }};
+new Chart(document.getElementById('chartTopItems'), {
+  type: 'doughnut',
+  data: {
+    labels: topItems,
+    datasets: [{ data: topQty, backgroundColor: ['#2563eb','#06b6d4','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899'], borderWidth: 0 }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 8, font:{size:10} } } }
+  }
+});
+{% endif %}
+</script>
+{% endblock %}

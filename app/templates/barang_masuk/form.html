@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}Input Barang Masuk{% endblock %}
+{% block page_title %}Input Barang Masuk{% endblock %}
+
+{% block content %}
+<div class="bg-white rounded-xl border border-slate-200 max-w-3xl mx-auto">
+  <form method="POST" class="p-5 lg:p-6 space-y-5">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1.5">No. Faktur / PO</label>
+        <input type="text" name="no_faktur" required class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500" placeholder="PO-2026-001">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1.5">Tanggal</label>
+        <input type="date" name="tanggal" value="{{ today }}" required class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1.5">Supplier</label>
+        <select name="supplier_id" required class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500">
+          <option value="">— Pilih Supplier —</option>
+          {% for s in suppliers %}<option value="{{ s.id }}">{{ s.kode }} — {{ s.nama }}</option>{% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <div>
+      <label class="block text-sm font-medium text-slate-700 mb-1.5">Catatan</label>
+      <textarea name="catatan" rows="2" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500"></textarea>
+    </div>
+
+    <div class="border-t border-slate-200 pt-4">
+      <div class="flex items-center justify-between mb-3">
+        <h4 class="font-semibold text-slate-800 text-sm">Daftar Barang</h4>
+        <button type="button" onclick="addRow()" class="inline-flex items-center gap-1 bg-success-100 hover:bg-success-200 text-success-700 text-xs font-medium px-2.5 py-1.5 rounded-lg transition">
+          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+          Tambah Baris
+        </button>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="bg-slate-50 text-slate-600 text-xs uppercase">
+            <tr>
+              <th class="text-left px-3 py-2 font-semibold">Barang</th>
+              <th class="text-right px-3 py-2 font-semibold w-20">Qty</th>
+              <th class="text-right px-3 py-2 font-semibold w-32">Harga (Rp)</th>
+              <th class="text-right px-3 py-2 font-semibold w-24">Subtotal</th>
+              <th class="w-10"></th>
+            </tr>
+          </thead>
+          <tbody id="detailRows" class="divide-y divide-slate-100">
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="flex justify-end gap-2 pt-4 border-t border-slate-200">
+      <a href="{{ url_for('barang_masuk.index') }}" class="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg">Batal</a>
+      <button type="submit" class="px-5 py-2 text-sm font-medium bg-primary-600 hover:bg-primary-700 text-white rounded-lg shadow-sm">Simpan</button>
+    </div>
+  </form>
+</div>
+
+<script>
+const barangOpts = `{% for b in barangs %}<option value="{{ b.id }}" data-harga="{{ b.harga_satuan }}">{{ b.kode }} — {{ b.nama }} (stok: {{ b.stok }} {{ b.satuan.kode }})</option>{% endfor %}`;
+let rowIdx = 0;
+
+function addRow(){
+  rowIdx++;
+  const tr = document.createElement('tr');
+  tr.id = 'row'+rowIdx;
+  tr.innerHTML = `
+    <td class="px-3 py-2"><select name="barang_id[]" required class="w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm focus:ring-2 focus:ring-primary-500" onchange="updateHarga(this)"><option value="">— Pilih —</option>${barangOpts}</select></td>
+    <td class="px-3 py-2"><input type="number" name="qty[]" min="1" value="1" required class="w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm text-right focus:ring-2 focus:ring-primary-500" oninput="updateSub(this)"></td>
+    <td class="px-3 py-2"><input type="number" name="harga[]" min="0" step="100" value="0" class="w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm text-right focus:ring-2 focus:ring-primary-500" oninput="updateSub(this)"></td>
+    <td class="px-3 py-2 text-right text-slate-600 text-xs" id="sub${rowIdx}">Rp 0</td>
+    <td class="px-3 py-2 text-center"><button type="button" onclick="delRow('row${rowIdx}')" class="text-danger-500 hover:text-danger-700"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button></td>
+  `;
+  document.getElementById('detailRows').appendChild(tr);
+}
+
+function delRow(id){document.getElementById(id).remove()}
+
+function updateHarga(sel){
+  const opt = sel.options[sel.selectedIndex];
+  const h = opt ? opt.getAttribute('data-harga') : 0;
+  const row = sel.closest('tr');
+  const hargaInput = row.querySelector('input[name="harga[]"]');
+  hargaInput.value = h;
+  updateSub(hargaInput);
+}
+
+function updateSub(input){
+  const row = input.closest('tr');
+  const qty = parseInt(row.querySelector('input[name="qty[]"]').value) || 0;
+  const harga = parseFloat(row.querySelector('input[name="harga[]"]').value) || 0;
+  const subId = row.querySelector('td[id^="sub"]').id;
+  document.getElementById(subId).textContent = 'Rp ' + (qty*harga).toLocaleString('id-ID');
+}
+
+addRow();
+</script>
+{% endblock %}

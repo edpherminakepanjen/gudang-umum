@@ -1,0 +1,13 @@
+# Database & environment
+gudang_umum.db
+instance/
+*.db
+*.sqlite3
+.env
+
+# Python
+__pycache__/
+*.pyc
+venv/
+env/
+.venv/

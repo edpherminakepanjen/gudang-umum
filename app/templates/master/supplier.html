@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% block title %}Data Supplier{% endblock %}
+{% block page_title %}Data Supplier/Rekanan{% endblock %}
+
+{% block content %}
+<div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+  <div class="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
+    <h3 class="font-semibold text-slate-800">Daftar Supplier</h3>
+    <button onclick="openSupModal()" class="inline-flex items-center gap-1.5 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium px-3 py-1.5 rounded-lg transition">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+      Tambah Supplier
+    </button>
+  </div>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead class="bg-slate-50 text-slate-600 text-xs uppercase">
+        <tr>
+          <th class="text-left px-4 py-3 font-semibold">Kode</th>
+          <th class="text-left px-4 py-3 font-semibold">Nama</th>
+          <th class="text-left px-4 py-3 font-semibold">Kontak</th>
+          <th class="text-left px-4 py-3 font-semibold">Telepon</th>
+          <th class="text-right px-4 py-3 font-semibold">Aksi</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        {% for s in items %}
+        <tr class="hover:bg-slate-50 transition">
+          <td class="px-4 py-3 font-mono text-xs font-medium text-slate-700">{{ s.kode }}</td>
+          <td class="px-4 py-3 font-medium text-slate-800">{{ s.nama }}</td>
+          <td class="px-4 py-3 text-slate-600">{{ s.kontak or '-' }}</td>
+          <td class="px-4 py-3 text-slate-600">{{ s.telepon or '-' }}</td>
+          <td class="px-4 py-3 text-right whitespace-nowrap">
+            <button onclick='editSup({"id":{{ s.id }},"kode":"{{ s.kode|e }}","nama":"{{ s.nama|e }}","kontak":"{{ s.kontak|default('', true)|e }}","telepon":"{{ s.telepon|default('', true)|e }}","email":"{{ s.email|default('', true)|e }}","alamat":"{{ s.alamat|default('', true)|e }}","keterangan":"{{ s.keterangan|default('', true)|e }}"})' class="text-primary-600 hover:text-primary-700 text-xs font-medium mr-2">Edit</button>
+            <form method="POST" action="{{ url_for('master.supplier_delete', sid=s.id) }}" class="inline"
+                  onsubmit="return confirm('Hapus supplier {{ s.nama|e }}?')">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="text-danger-600 hover:text-danger-700 text-xs font-medium">Hapus</button>
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" class="px-4 py-8 text-center text-slate-400">Belum ada supplier.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div id="modalSup" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40 px-4 overflow-y-auto">
+  <div class="bg-white rounded-xl shadow-xl w-full max-w-lg my-8">
+    <div class="px-5 py-4 border-b border-slate-200"><h3 class="font-semibold text-slate-800" id="supTitle">Tambah Supplier</h3></div>
+    <form method="POST" id="formSup" class="p-5 space-y-4">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1.5">Kode</label>
+          <input type="text" name="kode" id="sup_kode" required class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500" placeholder="SUP-001">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1.5">Nama</label>
+          <input type="text" name="nama" id="sup_nama" required class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500" placeholder="PT Sumber Rezeki">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1.5">Kontak Person</label>
+          <input type="text" name="kontak" id="sup_kontak" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500" placeholder="Budi">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1.5">Telepon</label>
+          <input type="text" name="telepon" id="sup_telp" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500" placeholder="0812xxxx">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1.5">Email</label>
+          <input type="email" name="email" id="sup_email" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500" placeholder="email@ supplier.com">
+        </div>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1.5">Alamat</label>
+        <textarea name="alamat" id="sup_alamat" rows="2" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500"></textarea>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1.5">Keterangan</label>
+        <textarea name="keterangan" id="sup_ket" rows="2" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500"></textarea>
+      </div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button type="button" onclick="closeModal('modalSup')" class="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg">Batal</button>
+        <button type="submit" class="px-4 py-2 text-sm font-medium bg-primary-600 hover:bg-primary-700 text-white rounded-lg">Simpan</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function openModal(id){const m=document.getElementById(id);m.classList.remove('hidden');m.classList.add('flex')}
+function closeModal(id){const m=document.getElementById(id);m.classList.add('hidden');m.classList.remove('flex')}
+function openSupModal(){
+  document.getElementById('supTitle').textContent='Tambah Supplier';
+  document.getElementById('formSup').reset();
+  document.getElementById('formSup').action="{{ url_for('master.supplier_create') }}";
+  document.getElementById('sup_kode').disabled=false;
+  openModal('modalSup');
+}
+function editSup(s){
+  document.getElementById('supTitle').textContent='Edit Supplier';
+  document.getElementById('sup_kode').value=s.kode; document.getElementById('sup_kode').disabled=true;
+  document.getElementById('sup_nama').value=s.nama;
+  document.getElementById('sup_kontak').value=s.kontak||'';
+  document.getElementById('sup_telp').value=s.telepon||'';
+  document.getElementById('sup_email').value=s.email||'';
+  document.getElementById('sup_alamat').value=s.alamat||'';
+  document.getElementById('sup_ket').value=s.keterangan||'';
+  document.getElementById('formSup').action="{{ url_for('master.supplier_edit', sid=0) }}".replace('/0','/'+s.id);
+  openModal('modalSup');
+}
+</script>
+{% endblock %}

@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Detail Barang Masuk{% endblock %}
+{% block page_title %}Detail Barang Masuk{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto space-y-4">
+  <div class="bg-white rounded-xl border border-slate-200 p-5">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="font-semibold text-slate-800">{{ bm.no_faktur }}</h3>
+      <a href="{{ url_for('barang_masuk.index') }}" class="text-sm text-slate-500 hover:text-slate-700">← Kembali</a>
+    </div>
+    <div class="grid grid-cols-2 gap-4 text-sm">
+      <div><span class="text-slate-500">Tanggal:</span> <span class="font-medium text-slate-800">{{ fmt_date(bm.tanggal) }}</span></div>
+      <div><span class="text-slate-500">Supplier:</span> <span class="font-medium text-slate-800">{{ bm.supplier.nama }}</span></div>
+      <div><span class="text-slate-500">Dicatat oleh:</span> <span class="font-medium text-slate-800">{{ bm.user.nama }}</span></div>
+      <div><span class="text-slate-500">Dibuat:</span> <span class="font-medium text-slate-800">{{ fmt_datetime(bm.created_at) }}</span></div>
+    </div>
+    {% if bm.catatan %}<div class="mt-3 text-sm"><span class="text-slate-500">Catatan:</span> {{ bm.catatan }}</div>{% endif %}
+  </div>
+
+  <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+    <table class="w-full text-sm">
+      <thead class="bg-slate-50 text-slate-600 text-xs uppercase">
+        <tr>
+          <th class="text-left px-4 py-3 font-semibold">Barang</th>
+          <th class="text-right px-4 py-3 font-semibold">Qty</th>
+          <th class="text-right px-4 py-3 font-semibold">Harga</th>
+          <th class="text-right px-4 py-3 font-semibold">Subtotal</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        {% for d in bm.details %}
+        <tr>
+          <td class="px-4 py-3 font-medium text-slate-800">{{ d.barang.nama }} <span class="text-xs text-slate-400">({{ d.barang.kode }})</span></td>
+          <td class="px-4 py-3 text-right">{{ d.qty }} {{ d.barang.satuan.kode }}</td>
+          <td class="px-4 py-3 text-right text-slate-600">{{ fmt_rupiah(d.harga) }}</td>
+          <td class="px-4 py-3 text-right font-semibold">{{ fmt_rupiah(d.qty * d.harga) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr class="bg-slate-50">
+          <td colspan="3" class="px-4 py-3 text-right font-semibold text-slate-700">Total</td>
+          <td class="px-4 py-3 text-right font-bold text-slate-800">{{ fmt_rupiah(bm.total_nilai) }}</td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+</div>
+{% endblock %}

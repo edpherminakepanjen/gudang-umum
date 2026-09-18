@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Hitung Fisik — {{ o.no_opname }}{% endblock %}
+{% block page_title %}Hitung Fisik Stok Opname{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto space-y-4">
+  <div class="bg-primary-50 border border-primary-200 rounded-lg p-4 text-sm text-primary-800">
+    <strong>{{ o.no_opname }}</strong> — dibuat {{ fmt_date(o.tanggal) }} oleh {{ o.pembuat.nama }}.
+    Isi kolom "Stok Fisik" sesuai hasil hitung langsung di gudang. Bisa disimpan sebagian dulu, dilanjutkan nanti.
+  </div>
+
+  <form method="POST" action="{{ url_for('opname.save', oid=o.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+      <table class="w-full text-sm">
+        <thead class="bg-slate-50 text-slate-600 text-xs uppercase">
+          <tr>
+            <th class="text-left px-4 py-3 font-semibold">Barang</th>
+            <th class="text-right px-4 py-3 font-semibold">Stok Sistem</th>
+            <th class="text-right px-4 py-3 font-semibold w-32">Stok Fisik</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          {% for d in o.details %}
+          <tr>
+            <td class="px-4 py-3 font-medium text-slate-800">{{ d.barang.nama }} <span class="text-xs text-slate-400">({{ d.barang.kode }})</span></td>
+            <td class="px-4 py-3 text-right text-slate-600">{{ d.stok_sistem }} {{ d.barang.satuan.kode }}</td>
+            <td class="px-4 py-3 text-right">
+              <input type="hidden" name="detail_id[]" value="{{ d.id }}">
+              <input type="number" name="stok_fisik[]" min="0" value="{{ d.stok_fisik if d.stok_fisik is not none else '' }}"
+                     placeholder="-"
+                     class="w-24 rounded-lg border border-slate-300 px-2 py-1.5 text-sm text-right focus:ring-2 focus:ring-primary-500">
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <div class="px-4 py-4 border-t border-slate-200 flex items-center justify-between flex-wrap gap-3">
+        <a href="{{ url_for('opname.index') }}" class="text-sm text-slate-500 hover:text-slate-700">← Kembali ke daftar</a>
+        <button type="submit" class="inline-flex items-center gap-2 bg-slate-600 hover:bg-slate-700 text-white text-sm font-medium px-5 py-2.5 rounded-lg transition">
+          Simpan Progress
+        </button>
+      </div>
+    </div>
+  </form>
+
+  <form method="POST" action="{{ url_for('opname.finalize', oid=o.id) }}" onsubmit="return confirm('Selesaikan opname ini? Stok sistem akan otomatis disesuaikan mengikuti hasil hitung fisik, dan sesi ini tidak bisa diubah lagi setelahnya.')">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="bg-white rounded-xl border border-slate-200 p-5 flex items-center justify-between flex-wrap gap-3">
+      <p class="text-sm text-slate-600">Kalau semua barang sudah dihitung dan disimpan, klik untuk menyelesaikan opname secara final.</p>
+      <button type="submit" class="inline-flex items-center gap-2 bg-success-600 hover:bg-success-700 text-white text-sm font-medium px-5 py-2.5 rounded-lg transition">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+        Selesaikan Opname
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}

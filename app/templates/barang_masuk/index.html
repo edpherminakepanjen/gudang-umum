@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Barang Masuk{% endblock %}
+{% block page_title %}Transaksi Barang Masuk{% endblock %}
+
+{% block content %}
+<div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+  <div class="px-5 py-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+    <form method="GET" class="flex items-center gap-2">
+      <input type="text" name="q" value="{{ q }}" placeholder="Cari no. faktur..."
+             class="rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:ring-2 focus:ring-primary-500 w-48">
+      <button type="submit" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium px-3 py-1.5 rounded-lg">Cari</button>
+    </form>
+    <a href="{{ url_for('barang_masuk.create') }}" class="inline-flex items-center gap-1.5 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium px-3 py-1.5 rounded-lg transition">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+      Input Barang Masuk
+    </a>
+  </div>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead class="bg-slate-50 text-slate-600 text-xs uppercase">
+        <tr>
+          <th class="text-left px-4 py-3 font-semibold">No. Faktur</th>
+          <th class="text-left px-4 py-3 font-semibold">Tanggal</th>
+          <th class="text-left px-4 py-3 font-semibold">Supplier</th>
+          <th class="text-right px-4 py-3 font-semibold">Items</th>
+          <th class="text-right px-4 py-3 font-semibold">Total Nilai</th>
+          <th class="text-left px-4 py-3 font-semibold">Oleh</th>
+          <th class="text-right px-4 py-3 font-semibold">Aksi</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        {% for bm in items %}
+        <tr class="hover:bg-slate-50 transition">
+          <td class="px-4 py-3 font-mono text-xs font-medium text-slate-700">{{ bm.no_faktur }}</td>
+          <td class="px-4 py-3 text-slate-600">{{ fmt_date(bm.tanggal) }}</td>
+          <td class="px-4 py-3 font-medium text-slate-800">{{ bm.supplier.nama }}</td>
+          <td class="px-4 py-3 text-right text-slate-600">{{ bm.details|length }}</td>
+          <td class="px-4 py-3 text-right text-slate-600">{{ fmt_rupiah(bm.total_nilai) }}</td>
+          <td class="px-4 py-3 text-slate-600 text-xs">{{ bm.user.nama }}</td>
+          <td class="px-4 py-3 text-right">
+            <a href="{{ url_for('barang_masuk.detail', bid=bm.id) }}" class="text-primary-600 hover:text-primary-700 text-xs font-medium">Lihat</a>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" class="px-4 py-8 text-center text-slate-400">Belum ada transaksi barang masuk.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

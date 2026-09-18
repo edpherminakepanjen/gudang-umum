@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+{% block title %}Kategori & Satuan{% endblock %}
+{% block page_title %}Kategori & Satuan{% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+  {# Kategori #}
+  <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+    <div class="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
+      <h3 class="font-semibold text-slate-800">Kategori Barang</h3>
+      <button onclick="openModal('modalKat')" class="inline-flex items-center gap-1.5 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium px-3 py-1.5 rounded-lg transition">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+        Tambah
+      </button>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="bg-slate-50 text-slate-600 text-xs uppercase">
+          <tr>
+            <th class="text-left px-4 py-3 font-semibold">Kode</th>
+            <th class="text-left px-4 py-3 font-semibold">Nama</th>
+            <th class="text-left px-4 py-3 font-semibold">Keterangan</th>
+            <th class="text-right px-4 py-3 font-semibold">Aksi</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          {% for k in items %}
+          <tr class="hover:bg-slate-50 transition">
+            <td class="px-4 py-3 font-mono text-xs font-medium text-slate-700">{{ k.kode }}</td>
+            <td class="px-4 py-3 font-medium text-slate-800">{{ k.nama }}</td>
+            <td class="px-4 py-3 text-slate-500 text-xs">{{ k.keterangan or '-' }}</td>
+            <td class="px-4 py-3 text-right">
+              <button onclick="editKat({{ k.id }}, '{{ k.nama|e }}', '{{ k.keterangan|e }}')"
+                      class="text-primary-600 hover:text-primary-700 text-xs font-medium mr-2">Edit</button>
+              <form method="POST" action="{{ url_for('master.kategori_delete', kid=k.id) }}" class="inline"
+                    onsubmit="return confirm('Hapus kategori {{ k.nama }}?')">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="text-danger-600 hover:text-danger-700 text-xs font-medium">Hapus</button>
+              </form>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="4" class="px-4 py-8 text-center text-slate-400">Belum ada kategori.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  {# Satuan #}
+  <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+    <div class="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
+      <h3 class="font-semibold text-slate-800">Satuan</h3>
+      <button onclick="openModal('modalSat')" class="inline-flex items-center gap-1.5 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium px-3 py-1.5 rounded-lg transition">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+        Tambah
+      </button>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="bg-slate-50 text-slate-600 text-xs uppercase">
+          <tr>
+            <th class="text-left px-4 py-3 font-semibold">Kode</th>
+            <th class="text-left px-4 py-3 font-semibold">Nama</th>
+            <th class="text-right px-4 py-3 font-semibold">Aksi</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          {% for s in satuans %}
+          <tr class="hover:bg-slate-50 transition">
+            <td class="px-4 py-3 font-mono text-xs font-medium text-slate-700">{{ s.kode }}</td>
+            <td class="px-4 py-3 font-medium text-slate-800">{{ s.nama }}</td>
+            <td class="px-4 py-3 text-right">
+              <button onclick="editSat({{ s.id }}, '{{ s.nama|e }}')"
+                      class="text-primary-600 hover:text-primary-700 text-xs font-medium mr-2">Edit</button>
+              <form method="POST" action="{{ url_for('master.satuan_delete', sid=s.id) }}" class="inline"
+                    onsubmit="return confirm('Hapus satuan {{ s.nama }}?')">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="text-danger-600 hover:text-danger-700 text-xs font-medium">Hapus</button>
+              </form>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="3" class="px-4 py-8 text-center text-slate-400">Belum ada satuan.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+{# Modal Kategori #}
+<div id="modalKat" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40 px-4">
+  <div class="bg-white rounded-xl shadow-xl w-full max-w-md">
+    <div class="px-5 py-4 border-b border-slate-200"><h3 class="font-semibold text-slate-800" id="modalKatTitle">Tambah Kategori</h3></div>
+    <form method="POST" id="formKat" class="p-5 space-y-4">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="edit_id" id="kat_edit_id">
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1.5">Kode</label>
+        <input type="text" name="kode" id="kat_kode" required class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500" placeholder="ATK">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1.5">Nama</label>
+        <input type="text" name="nama" id="kat_nama" required class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500" placeholder="Alat Tulis Kantor">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1.5">Keterangan</label>
+        <textarea name="keterangan" id="kat_ket" rows="2" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"></textarea>
+      </div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button type="button" onclick="closeModal('modalKat')" class="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg">Batal</button>
+        <button type="submit" class="px-4 py-2 text-sm font-medium bg-primary-600 hover:bg-primary-700 text-white rounded-lg">Simpan</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{# Modal Satuan #}
+<div id="modalSat" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40 px-4">
+  <div class="bg-white rounded-xl shadow-xl w-full max-w-md">
+    <div class="px-5 py-4 border-b border-slate-200"><h3 class="font-semibold text-slate-800" id="modalSatTitle">Tambah Satuan</h3></div>
+    <form method="POST" id="formSat" class="p-5 space-y-4">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="edit_id" id="sat_edit_id">
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1.5">Kode</label>
+        <input type="text" name="kode" id="sat_kode" required class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500" placeholder="pcs">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1.5">Nama</label>
+        <input type="text" name="nama" id="sat_nama" required class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500" placeholder="Pieces">
+      </div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button type="button" onclick="closeModal('modalSat')" class="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg">Batal</button>
+        <button type="submit" class="px-4 py-2 text-sm font-medium bg-primary-600 hover:bg-primary-700 text-white rounded-lg">Simpan</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function openModal(id){const m=document.getElementById(id);m.classList.remove('hidden');m.classList.add('flex')}
+function closeModal(id){const m=document.getElementById(id);m.classList.add('hidden');m.classList.remove('flex')}
+
+function editKat(id,nama,ket){
+  document.getElementById('modalKatTitle').textContent='Edit Kategori';
+  document.getElementById('kat_edit_id').value=id;
+  document.getElementById('kat_kode').value=''; document.getElementById('kat_kode').disabled=true;
+  document.getElementById('kat_nama').value=nama;
+  document.getElementById('kat_ket').value=ket;
+  document.getElementById('formKat').action="{{ url_for('master.kategori_edit', kid=0) }}".replace('/0','/'+id);
+  openModal('modalKat');
+}
+function editSat(id,nama){
+  document.getElementById('modalSatTitle').textContent='Edit Satuan';
+  document.getElementById('sat_edit_id').value=id;
+  document.getElementById('sat_kode').value=''; document.getElementById('sat_kode').disabled=true;
+  document.getElementById('sat_nama').value=nama;
+  document.getElementById('formSat').action="{{ url_for('master.satuan_edit', sid=0) }}".replace('/0','/'+id);
+  openModal('modalSat');
+}
+// Reset on open
+document.querySelectorAll('button[onclick^="openModal"]').forEach(b=>{
+  b.addEventListener('click',()=>{
+    if(b.textContent.trim()==='Tambah'){
+      const mid=b.getAttribute('onclick').match(/'(\w+)'/)[1];
+      const f=document.getElementById('form'+mid.replace('modal',''));
+      if(f){f.reset();f.action=f.dataset.orig||f.action;}
+      if(mid==='modalKat'){document.getElementById('kat_kode').disabled=false;document.getElementById('modalKatTitle').textContent='Tambah Kategori'}
+      if(mid==='modalSat'){document.getElementById('sat_kode').disabled=false;document.getElementById('modalSatTitle').textContent='Tambah Satuan'}
+    }
+  })
+});
+</script>
+{% endblock %}

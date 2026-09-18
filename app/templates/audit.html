@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Audit Trail{% endblock %}
+{% block page_title %}Audit Trail{% endblock %}
+
+{% block content %}
+<div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+  <div class="px-5 py-4 border-b border-slate-200 flex flex-wrap items-center gap-2">
+    <form method="GET" class="flex flex-wrap items-center gap-2">
+      <select name="modul" class="rounded-lg border border-slate-300 px-3 py-1.5 text-sm">
+        <option value="">Semua Modul</option>
+        {% for m in modul_list %}<option value="{{ m }}" {% if mf==m %}selected{% endif %}>{{ m|capitalize }}</option>{% endfor %}
+      </select>
+      <select name="aksi" class="rounded-lg border border-slate-300 px-3 py-1.5 text-sm">
+        <option value="">Semua Aksi</option>
+        {% for a in aksi_list %}<option value="{{ a }}" {% if af==a %}selected{% endif %}>{{ a|capitalize }}</option>{% endfor %}
+      </select>
+      <button type="submit" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium px-3 py-1.5 rounded-lg">Filter</button>
+      {% if mf or af %}<a href="{{ url_for('audit.index') }}" class="text-sm text-slate-500 hover:text-slate-700">Reset</a>{% endif %}
+    </form>
+  </div>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead class="bg-slate-50 text-slate-600 text-xs uppercase">
+        <tr>
+          <th class="text-left px-4 py-3 font-semibold">Waktu</th>
+          <th class="text-left px-4 py-3 font-semibold">User</th>
+          <th class="text-left px-4 py-3 font-semibold">Aksi</th>
+          <th class="text-left px-4 py-3 font-semibold">Modul</th>
+          <th class="text-left px-4 py-3 font-semibold">Target</th>
+          <th class="text-left px-4 py-3 font-semibold">Detail</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        {% for a in items %}
+        <tr class="hover:bg-slate-50 transition">
+          <td class="px-4 py-3 text-slate-600 text-xs whitespace-nowrap">{{ fmt_datetime(a.timestamp) }}</td>
+          <td class="px-4 py-3 font-medium text-slate-800">{{ a.username }}</td>
+          <td class="px-4 py-3">
+            {% set ac = {'create':'success','update':'primary','delete':'danger','approve':'success','reject':'danger','process':'primary','complete':'success','cancel':'warning','activate':'success','deactivate':'warning','import':'primary','login':'slate','logout':'slate'} %}
+            <span class="inline-flex rounded-full bg-{{ ac.get(a.aksi,'slate') }}-100 text-{{ ac.get(a.aksi,'slate') }}-700 px-2 py-0.5 text-xs font-medium">{{ a.aksi }}</span>
+          </td>
+          <td class="px-4 py-3 text-slate-600">{{ a.modul }}</td>
+          <td class="px-4 py-3 text-slate-600 text-xs">{{ a.target or '-' }}</td>
+          <td class="px-4 py-3 text-slate-400 text-xs max-w-xs truncate">{{ a.detail or '-' }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" class="px-4 py-8 text-center text-slate-400">Belum ada log.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="px-4 py-3 border-t border-slate-200 text-sm text-slate-500">Menampilkan {{ items|length }} log terbaru (maks 200).</div>
+</div>
+{% endblock %}

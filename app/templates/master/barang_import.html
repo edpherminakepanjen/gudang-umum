@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Import Barang{% endblock %}
+{% block page_title %}Import Barang dari Excel{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto space-y-4">
+  <div class="bg-white rounded-xl border border-slate-200 p-5">
+    <h3 class="font-semibold text-slate-800 mb-2">Cara Import</h3>
+    <ol class="text-sm text-slate-600 space-y-1 list-decimal list-inside mb-4">
+      <li>Download template Excel di bawah ini.</li>
+      <li>Isi data barang sesuai kolom yang tersedia (kode Kategori & Satuan harus sudah ada di sistem — cek sheet "Referensi Kategori & Satuan" di dalam file template).</li>
+      <li>Upload kembali file yang sudah diisi.</li>
+    </ol>
+    <a href="{{ url_for('master.barang_import_template') }}" class="inline-flex items-center gap-1.5 bg-success-600 hover:bg-success-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+      Download Template Excel
+    </a>
+  </div>
+
+  <div class="bg-white rounded-xl border border-slate-200 p-5">
+    <form method="POST" enctype="multipart/form-data" class="space-y-4">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1.5">Upload File Excel</label>
+        <input type="file" name="file" accept=".xlsx,.xls" required class="w-full text-sm border border-slate-300 rounded-lg px-3 py-2">
+      </div>
+      <button type="submit" class="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium px-5 py-2.5 rounded-lg transition">
+        Import Sekarang
+      </button>
+    </form>
+  </div>
+
+  {% if done %}
+  <div class="bg-white rounded-xl border border-slate-200 p-5">
+    <h4 class="font-semibold text-slate-800 mb-2">Hasil Import</h4>
+    <div class="text-sm text-slate-600 mb-3">
+      <span class="text-success-600 font-semibold">{{ berhasil }} berhasil</span> ·
+      <span class="text-slate-500">{{ dilewati }} dilewati (kode sudah ada)</span> ·
+      <span class="text-danger-600 font-semibold">{{ error_rows|length }} error</span>
+    </div>
+    {% if error_rows %}
+    <div class="bg-danger-50 border border-danger-200 rounded-lg p-3 text-xs text-danger-700 space-y-1 max-h-56 overflow-y-auto">
+      {% for e in error_rows %}
+      <div>{{ e }}</div>
+      {% endfor %}
+    </div>
+    {% endif %}
+    <a href="{{ url_for('master.barang_index') }}" class="inline-block mt-4 text-sm text-primary-600 hover:text-primary-700 font-medium">Lihat Data Barang →</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}Laporan Mutasi{% endblock %}
+{% block page_title %}Laporan Mutasi Barang{% endblock %}
+
+{% block content %}
+<div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+  <div class="px-5 py-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+    <form method="GET" class="flex flex-wrap items-center gap-2">
+      <label class="text-sm text-slate-600">Dari:</label>
+      <input type="date" name="start" value="{{ start.isoformat() }}" class="rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:ring-2 focus:ring-primary-500">
+      <label class="text-sm text-slate-600">Sampai:</label>
+      <input type="date" name="end" value="{{ end.isoformat() }}" class="rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:ring-2 focus:ring-primary-500">
+      <button type="submit" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium px-3 py-1.5 rounded-lg">Filter</button>
+    </form>
+    <div class="flex items-center gap-2">
+      <a href="{{ url_for('laporan.mutasi_excel', start=start.isoformat(), end=end.isoformat()) }}" class="inline-flex items-center gap-1.5 bg-success-600 hover:bg-success-700 text-white text-sm font-medium px-3 py-1.5 rounded-lg transition">Excel</a>
+      <a href="{{ url_for('laporan.mutasi_pdf', start=start.isoformat(), end=end.isoformat()) }}" class="inline-flex items-center gap-1.5 bg-danger-600 hover:bg-danger-700 text-white text-sm font-medium px-3 py-1.5 rounded-lg transition">PDF</a>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 divide-x divide-slate-200">
+    {# Barang Masuk #}
+    <div class="p-5">
+      <h3 class="font-semibold text-slate-800 mb-3 flex items-center gap-2">
+        <span class="w-3 h-3 rounded-full bg-primary-500"></span> Barang Masuk
+      </h3>
+      <div class="space-y-2">
+        {% for bm in masuk %}
+        <div class="border border-slate-200 rounded-lg p-3">
+          <div class="flex items-center justify-between mb-1">
+            <span class="font-mono text-xs font-medium text-slate-700">{{ bm.no_faktur }}</span>
+            <span class="text-xs text-slate-400">{{ fmt_date(bm.tanggal) }}</span>
+          </div>
+          <div class="text-xs text-slate-500 mb-2">{{ bm.supplier.nama }}</div>
+          <div class="space-y-1">
+            {% for d in bm.details %}
+            <div class="flex justify-between text-xs">
+              <span class="text-slate-700">{{ d.barang.nama }}</span>
+              <span class="font-medium text-primary-700">+{{ d.qty }} {{ d.barang.satuan.kode }}</span>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% else %}
+        <p class="text-sm text-slate-400 py-4 text-center">Tidak ada transaksi masuk pada periode ini.</p>
+        {% endfor %}
+      </div>
+    </div>
+
+    {# Barang Keluar #}
+    <div class="p-5">
+      <h3 class="font-semibold text-slate-800 mb-3 flex items-center gap-2">
+        <span class="w-3 h-3 rounded-full bg-accent-500"></span> Barang Keluar (Permintaan)
+      </h3>
+      <div class="space-y-2">
+        {% for p in keluar %}
+        <div class="border border-slate-200 rounded-lg p-3">
+          <div class="flex items-center justify-between mb-1">
+            <span class="font-mono text-xs font-medium text-slate-700">{{ p.no_permintaan }}</span>
+            <span class="text-xs text-slate-400">{{ fmt_date(p.tanggal) }}</span>
+          </div>
+          <div class="text-xs text-slate-500 mb-2">{{ p.unit.nama }}</div>
+          <div class="space-y-1">
+            {% for d in p.details %}
+            <div class="flex justify-between text-xs">
+              <span class="text-slate-700">{{ d.barang.nama }}</span>
+              <span class="font-medium text-accent-700">-{{ d.qty_diproses }} {{ d.barang.satuan.kode }}</span>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% else %}
+        <p class="text-sm text-slate-400 py-4 text-center">Tidak ada transaksi keluar pada periode ini.</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

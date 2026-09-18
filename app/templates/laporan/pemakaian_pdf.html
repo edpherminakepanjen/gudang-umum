@@ -1,0 +1,59 @@
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+@page { size: A4; margin: 1.5cm; }
+body { font-family: Helvetica, sans-serif; font-size: 10px; color: #1e293b; }
+.header { text-align: center; margin-bottom: 16px; border-bottom: 2px solid #1e3a8a; padding-bottom: 8px; }
+.header h1 { font-size: 16px; color: #1e3a8a; margin: 0; }
+.header h2 { font-size: 12px; margin: 4px 0 0; }
+.header p { font-size: 9px; color: #64748b; margin: 2px 0 0; }
+h3 { font-size: 11px; color: #1e3a8a; margin: 14px 0 6px; }
+table { width: 100%; border-collapse: collapse; margin-top: 4px; }
+th { background: #1e3a8a; color: white; padding: 5px 6px; text-align: left; font-size: 8px; }
+td { padding: 4px 6px; border-bottom: 1px solid #e2e8f0; }
+.right { text-align: right; }
+.grand { font-weight: bold; background: #eff6ff; }
+.signature { margin-top: 30px; display: flex; justify-content: space-between; }
+.sig-block { text-align: center; font-size: 10px; }
+.sig-block p { margin: 0; }
+.sig-space { height: 60px; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>RS HERMINA KEPANJEN</h1>
+  <h2>REKAP PEMAKAIAN BARANG PER UNIT</h2>
+  <p>Periode: {{ fmt_date_full(start) }} s/d {{ fmt_date_full(end) }}</p>
+</div>
+
+{% for kode, data in units_data.items() %}
+<h3>{{ data.nama }} ({{ data.kode }})</h3>
+<table>
+  <thead><tr><th>Kode</th><th>Nama Barang</th><th class="right">Total Qty</th><th class="right">Total Nilai</th></tr></thead>
+  <tbody>
+    {% for r in data.rows %}
+    <tr>
+      <td>{{ r.bkode }}</td>
+      <td>{{ r.bnama }}</td>
+      <td class="right">{{ r.total_qty }}</td>
+      <td class="right">{{ fmt_rupiah(r.total_nilai) }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+  <tfoot>
+    <tr class="grand">
+      <td colspan="2" class="right">TOTAL</td>
+      <td class="right">{{ data.grand_qty }}</td>
+      <td class="right">{{ fmt_rupiah(data.grand_nilai) }}</td>
+    </tr>
+  </tfoot>
+</table>
+{% endfor %}
+
+<div class="signature">
+  <div class="sig-block"><p>Dibuat oleh,</p><div class="sig-space"></div><p>Admin Gudang Umum</p></div>
+  <div class="sig-block"><p>Disahkan oleh,</p><div class="sig-space"></div><p>Kepala RS Hermina Kepanjen</p></div>
+</div>
+</body>
+</html>

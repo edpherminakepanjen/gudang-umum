@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Detail Opname — {{ o.no_opname }}{% endblock %}
+{% block page_title %}Detail Stok Opname{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto space-y-4">
+  <div class="bg-white rounded-xl border border-slate-200 p-5">
+    <div class="flex items-center justify-between mb-2">
+      <h3 class="font-semibold text-slate-800">{{ o.no_opname }}</h3>
+      <a href="{{ url_for('opname.index') }}" class="text-sm text-slate-500 hover:text-slate-700">← Kembali</a>
+    </div>
+    <div class="grid grid-cols-2 gap-4 text-sm">
+      <div><span class="text-slate-500">Tanggal:</span> <span class="font-medium text-slate-800">{{ fmt_date(o.tanggal) }}</span></div>
+      <div><span class="text-slate-500">Dibuat oleh:</span> <span class="font-medium text-slate-800">{{ o.pembuat.nama }}</span></div>
+      <div><span class="text-slate-500">Diselesaikan:</span> <span class="font-medium text-slate-800">{{ fmt_datetime(o.selesai_at) }}</span></div>
+      <div><span class="text-slate-500">Oleh:</span> <span class="font-medium text-slate-800">{{ o.penyelesai.nama if o.penyelesai else '-' }}</span></div>
+    </div>
+    <div class="mt-3 text-sm">
+      <span class="text-warning-600 font-semibold">{{ o.jumlah_selisih }} barang</span> mengalami penyesuaian stok dari total {{ o.details|length }} barang yang diopname.
+    </div>
+  </div>
+
+  <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+    <table class="w-full text-sm">
+      <thead class="bg-slate-50 text-slate-600 text-xs uppercase">
+        <tr>
+          <th class="text-left px-4 py-3 font-semibold">Barang</th>
+          <th class="text-right px-4 py-3 font-semibold">Stok Sistem (Sebelum)</th>
+          <th class="text-right px-4 py-3 font-semibold">Stok Fisik</th>
+          <th class="text-right px-4 py-3 font-semibold">Selisih</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        {% for d in o.details %}
+        <tr class="{% if d.selisih != 0 %}bg-warning-50{% endif %}">
+          <td class="px-4 py-3 font-medium text-slate-800">{{ d.barang.nama }} <span class="text-xs text-slate-400">({{ d.barang.kode }})</span></td>
+          <td class="px-4 py-3 text-right text-slate-600">{{ d.stok_sistem }} {{ d.barang.satuan.kode }}</td>
+          <td class="px-4 py-3 text-right text-slate-800 font-medium">{{ d.stok_fisik }} {{ d.barang.satuan.kode }}</td>
+          <td class="px-4 py-3 text-right font-semibold {% if d.selisih > 0 %}text-primary-600{% elif d.selisih < 0 %}text-danger-600{% else %}text-slate-400{% endif %}">
+            {% if d.selisih > 0 %}+{{ d.selisih }}{% else %}{{ d.selisih }}{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

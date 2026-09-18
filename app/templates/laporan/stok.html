@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% from "macros.html" import stok_badge %}
+{% block title %}Laporan Stok{% endblock %}
+{% block page_title %}Laporan Stok Barang{% endblock %}
+
+{% block content %}
+<div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+  <div class="px-5 py-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+    <div class="text-sm text-slate-600">
+      <span class="font-medium text-slate-800">Per:</span> {{ fmt_date(tanggal) }}
+      <span class="mx-2 text-slate-300">|</span>
+      <span class="font-medium text-slate-800">Total Jenis:</span> {{ items|length }}
+      <span class="mx-2 text-slate-300">|</span>
+      <span class="font-medium text-slate-800">Total Nilai:</span> {{ fmt_rupiah(total_nilai) }}
+    </div>
+    <div class="flex items-center gap-2">
+      <a href="{{ url_for('laporan.stok_excel') }}" class="inline-flex items-center gap-1.5 bg-success-600 hover:bg-success-700 text-white text-sm font-medium px-3 py-1.5 rounded-lg transition">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        Excel
+      </a>
+      <a href="{{ url_for('laporan.stok_pdf') }}" class="inline-flex items-center gap-1.5 bg-danger-600 hover:bg-danger-700 text-white text-sm font-medium px-3 py-1.5 rounded-lg transition">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+        PDF
+      </a>
+    </div>
+  </div>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead class="bg-slate-50 text-slate-600 text-xs uppercase">
+        <tr>
+          <th class="text-left px-4 py-3 font-semibold">Kode</th>
+          <th class="text-left px-4 py-3 font-semibold">Nama</th>
+          <th class="text-left px-4 py-3 font-semibold">Kategori</th>
+          <th class="text-left px-4 py-3 font-semibold">Satuan</th>
+          <th class="text-right px-4 py-3 font-semibold">Harga</th>
+          <th class="text-right px-4 py-3 font-semibold">Stok</th>
+          <th class="text-right px-4 py-3 font-semibold">Min</th>
+          <th class="text-center px-4 py-3 font-semibold">Status</th>
+          <th class="text-right px-4 py-3 font-semibold">Nilai Stok</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        {% for b in items %}
+        <tr class="hover:bg-slate-50 transition">
+          <td class="px-4 py-3 font-mono text-xs font-medium text-slate-700">{{ b.kode }}</td>
+          <td class="px-4 py-3 font-medium text-slate-800">{{ b.nama }}</td>
+          <td class="px-4 py-3 text-slate-600">{{ b.kategori.nama }}</td>
+          <td class="px-4 py-3 text-slate-600">{{ b.satuan.kode }}</td>
+          <td class="px-4 py-3 text-right text-slate-600">{{ fmt_rupiah(b.harga_satuan) }}</td>
+          <td class="px-4 py-3 text-right font-semibold">{{ b.stok }}</td>
+          <td class="px-4 py-3 text-right text-slate-400">{{ b.stok_min }}</td>
+          <td class="px-4 py-3 text-center">{{ stok_badge(b.status_stok) }}</td>
+          <td class="px-4 py-3 text-right font-medium text-slate-700">{{ fmt_rupiah(b.nilai_stok) }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="9" class="px-4 py-8 text-center text-slate-400">Tidak ada data.</td></tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr class="bg-slate-50 font-semibold">
+          <td colspan="8" class="px-4 py-3 text-right text-slate-700">Total Nilai Stok</td>
+          <td class="px-4 py-3 text-right text-slate-800">{{ fmt_rupiah(total_nilai) }}</td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+</div>
+{% endblock %}

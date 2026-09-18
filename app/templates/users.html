@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% block title %}Kelola User{% endblock %}
+{% block page_title %}Kelola User{% endblock %}
+
+{% block content %}
+<div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+  <div class="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
+    <h3 class="font-semibold text-slate-800">Daftar User</h3>
+    <button onclick="openUserModal()" class="inline-flex items-center gap-1.5 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium px-3 py-1.5 rounded-lg transition">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+      Tambah User
+    </button>
+  </div>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead class="bg-slate-50 text-slate-600 text-xs uppercase">
+        <tr>
+          <th class="text-left px-4 py-3 font-semibold">Username</th>
+          <th class="text-left px-4 py-3 font-semibold">Nama</th>
+          <th class="text-left px-4 py-3 font-semibold">Role</th>
+          <th class="text-left px-4 py-3 font-semibold">Unit</th>
+          <th class="text-center px-4 py-3 font-semibold">Status</th>
+          <th class="text-right px-4 py-3 font-semibold">Aksi</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        {% for u in items %}
+        <tr class="hover:bg-slate-50 transition">
+          <td class="px-4 py-3 font-mono text-xs font-medium text-slate-700">{{ u.username }}</td>
+          <td class="px-4 py-3 font-medium text-slate-800">{{ u.nama }}</td>
+          <td class="px-4 py-3">
+            {% set rc = {'admin':'primary','kepala':'accent','staff':'slate'} %}
+            <span class="inline-flex rounded-full bg-{{ rc.get(u.role,'slate') }}-100 text-{{ rc.get(u.role,'slate') }}-700 px-2 py-0.5 text-xs font-medium">{{ u.role_label }}</span>
+          </td>
+          <td class="px-4 py-3 text-slate-600">{{ u.unit.nama if u.unit else '-' }}</td>
+          <td class="px-4 py-3 text-center">
+            {% if u.is_active_user %}
+            <span class="inline-flex rounded-full bg-success-100 text-success-700 px-2 py-0.5 text-xs font-medium">Aktif</span>
+            {% else %}
+            <span class="inline-flex rounded-full bg-danger-100 text-danger-700 px-2 py-0.5 text-xs font-medium">Nonaktif</span>
+            {% endif %}
+          </td>
+          <td class="px-4 py-3 text-right whitespace-nowrap">
+            <button onclick='editUser({"id":{{ u.id }},"username":"{{ u.username|e }}","nama":"{{ u.nama|e }}","email":"{{ u.email|default('', true)|e }}","role":"{{ u.role }}","unit_id":{{ u.unit_id|tojson }},"is_active_user":{{ u.is_active_user|tojson }}})' class="text-primary-600 hover:text-primary-700 text-xs font-medium mr-2">Edit</button>
+            {% if u.id != current_user.id %}
+            <form method="POST" action="{{ url_for('users.delete', uid=u.id) }}" class="inline" onsubmit="return confirm('Hapus user {{ u.username }}?')">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="text-danger-600 hover:text-danger-700 text-xs font-medium">Hapus</button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div id="modalUser" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40 px-4 overflow-y-auto">
+  <div class="bg-white rounded-xl shadow-xl w-full max-w-md my-8">
+    <div class="px-5 py-4 border-b border-slate-200"><h3 class="font-semibold text-slate-800" id="userTitle">Tambah User</h3></div>
+    <form method="POST" id="formUser" class="p-5 space-y-4">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1.5">Username</label>
+        <input type="text" name="username" id="u_username" required class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500" placeholder="admin01">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1.5">Nama Lengkap</label>
+        <input type="text" name="nama" id="u_nama" required class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1.5">Email</label>
+        <input type="email" name="email" id="u_email" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500">
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1.5">Role</label>
+          <select name="role" id="u_role" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500">
+            <option value="admin">Admin Gudang</option>
+            <option value="kepala">Kepala Unit</option>
+            <option value="staff">Staff Unit</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1.5">Unit</label>
+          <select name="unit_id" id="u_unit" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500">
+            <option value="">—</option>
+            {% for u in units %}<option value="{{ u.id }}">{{ u.kode }} — {{ u.nama }}</option>{% endfor %}
+          </select>
+        </div>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1.5">Password <span id="pw_hint" class="text-xs text-slate-400">(wajib)</span></label>
+        <input type="password" name="password" id="u_password" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500" placeholder="Min. 6 karakter">
+      </div>
+      <div id="activeWrap" class="hidden items-center gap-2">
+        <input type="checkbox" name="is_active" id="u_active" checked class="rounded border-slate-300">
+        <label for="u_active" class="text-sm text-slate-700">Akun aktif</label>
+      </div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button type="button" onclick="closeModal('modalUser')" class="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg">Batal</button>
+        <button type="submit" class="px-4 py-2 text-sm font-medium bg-primary-600 hover:bg-primary-700 text-white rounded-lg">Simpan</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function openModal(id){const m=document.getElementById(id);m.classList.remove('hidden');m.classList.add('flex')}
+function closeModal(id){const m=document.getElementById(id);m.classList.add('hidden');m.classList.remove('flex')}
+
+function openUserModal(){
+  document.getElementById('userTitle').textContent='Tambah User';
+  document.getElementById('formUser').reset();
+  document.getElementById('formUser').action="{{ url_for('users.create') }}";
+  document.getElementById('u_username').disabled=false;
+  document.getElementById('pw_hint').textContent='(wajib)';
+  document.getElementById('u_password').required=true;
+  document.getElementById('activeWrap').classList.add('hidden');
+  openModal('modalUser');
+}
+
+function editUser(u){
+  document.getElementById('userTitle').textContent='Edit User';
+  document.getElementById('u_username').value=u.username; document.getElementById('u_username').disabled=true;
+  document.getElementById('u_nama').value=u.nama;
+  document.getElementById('u_email').value=u.email||'';
+  document.getElementById('u_role').value=u.role;
+  document.getElementById('u_unit').value=u.unit_id||'';
+  document.getElementById('pw_hint').textContent='(kosongkan jika tidak ubah)';
+  document.getElementById('u_password').required=false;
+  document.getElementById('u_password').placeholder='Kosongkan jika tidak diubah';
+  const aw=document.getElementById('activeWrap');aw.classList.remove('hidden');aw.classList.add('flex');
+  document.getElementById('u_active').checked=u.is_active_user;
+  document.getElementById('formUser').action="{{ url_for('users.edit', uid=0) }}".replace('/0','/'+u.id);
+  openModal('modalUser');
+}
+</script>
+{% endblock %}

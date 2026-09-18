@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% from "macros.html" import stok_badge %}
+{% block title %}Monitoring Stok{% endblock %}
+{% block page_title %}Monitoring Stok{% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+  <div class="bg-white rounded-xl border border-slate-200 p-5">
+    <p class="text-sm text-slate-500">Total Jenis Barang</p>
+    <p class="text-2xl font-bold text-slate-800 mt-1">{{ below_min_count + aman_count }}</p>
+  </div>
+  <div class="bg-white rounded-xl border border-slate-200 p-5">
+    <p class="text-sm text-slate-500">Stok Aman</p>
+    <p class="text-2xl font-bold text-success-600 mt-1">{{ aman_count }}</p>
+  </div>
+  <div class="bg-white rounded-xl border border-slate-200 p-5">
+    <p class="text-sm text-slate-500">Di Bawah Minimum</p>
+    <p class="text-2xl font-bold text-danger-600 mt-1">{{ below_min_count }}</p>
+  </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+  <div class="lg:col-span-2 bg-white rounded-xl border border-slate-200 p-5">
+    <h3 class="font-semibold text-slate-800 mb-4">Tren Pemakaian Barang (Keluar)</h3>
+    <div class="h-64"><canvas id="chartTrend"></canvas></div>
+  </div>
+  <div class="bg-white rounded-xl border border-slate-200 p-5">
+    <h3 class="font-semibold text-slate-800 mb-4">Pemakaian per Unit</h3>
+    <div class="h-64"><canvas id="chartUnit"></canvas></div>
+  </div>
+</div>
+
+<div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+  <div class="px-5 py-4 border-b border-slate-200">
+    <h3 class="font-semibold text-slate-800">Barang di Bawah Stok Minimum</h3>
+  </div>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead class="bg-slate-50 text-slate-600 text-xs uppercase">
+        <tr>
+          <th class="text-left px-4 py-3 font-semibold">Kode</th>
+          <th class="text-left px-4 py-3 font-semibold">Nama</th>
+          <th class="text-left px-4 py-3 font-semibold">Kategori</th>
+          <th class="text-right px-4 py-3 font-semibold">Stok</th>
+          <th class="text-right px-4 py-3 font-semibold">Min</th>
+          <th class="text-center px-4 py-3 font-semibold">Status</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        {% for b in below_min %}
+        <tr class="hover:bg-slate-50 transition {% if b.stok <= 0 %}bg-danger-50{% elif b.stok <= b.stok_min %}bg-warning-50{% endif %}">
+          <td class="px-4 py-3 font-mono text-xs font-medium text-slate-700">{{ b.kode }}</td>
+          <td class="px-4 py-3 font-medium text-slate-800">{{ b.nama }}</td>
+          <td class="px-4 py-3 text-slate-600">{{ b.kategori.nama }}</td>
+          <td class="px-4 py-3 text-right font-semibold {% if b.stok<=0 %}text-danger-600{% else %}text-warning-600{% endif %}">{{ b.stok }} {{ b.satuan.kode }}</td>
+          <td class="px-4 py-3 text-right text-slate-400">{{ b.stok_min }}</td>
+          <td class="px-4 py-3 text-center">{{ stok_badge(b.status_stok) }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" class="px-4 py-8 text-center text-slate-400">Semua stok dalam batas aman.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+const tl={{ trend_labels|tojson }}, tk={{ trend_keluar|tojson }};
+new Chart(document.getElementById('chartTrend'),{
+  type:'line',
+  data:{labels:tl,datasets:[{label:'Qty Keluar',data:tk,borderColor:'#2563eb',backgroundColor:'#dbeafe',fill:true,tension:0.3}]},
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{precision:0}}}}
+});
+const tu={{ top_unit|map(attribute='0')|list|tojson }}, tq={{ top_unit|map(attribute='1')|list|tojson }};
+new Chart(document.getElementById('chartUnit'),{
+  type:'bar',
+  data:{labels:tu,datasets:[{label:'Qty',data:tq,backgroundColor:'#06b6d4',borderRadius:6}]},
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{precision:0}}}}
+});
+</script>
+{% endblock %}

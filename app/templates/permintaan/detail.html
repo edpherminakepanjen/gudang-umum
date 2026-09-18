@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+{% from "macros.html" import status_badge %}
+{% block title %}Detail Permintaan{% endblock %}
+{% block page_title %}Detail Permintaan{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto space-y-4">
+  <div class="bg-white rounded-xl border border-slate-200 p-5">
+    <div class="flex items-center justify-between mb-4">
+      <div>
+        <h3 class="font-semibold text-slate-800">{{ p.no_permintaan }}</h3>
+        <div class="mt-1">{{ status_badge(p.status_label, p.status_color) }}</div>
+      </div>
+      <a href="{{ url_for('permintaan.index') }}" class="text-sm text-slate-500 hover:text-slate-700">← Kembali</a>
+    </div>
+    <div class="grid grid-cols-2 gap-4 text-sm">
+      <div><span class="text-slate-500">Tanggal:</span> <span class="font-medium text-slate-800">{{ fmt_date(p.tanggal) }}</span></div>
+      <div><span class="text-slate-500">Unit:</span> <span class="font-medium text-slate-800">{{ p.unit.nama }}</span></div>
+      <div><span class="text-slate-500">Diajukan oleh:</span> <span class="font-medium text-slate-800">{{ p.pengaju.nama }}</span></div>
+      <div><span class="text-slate-500">Disetujui oleh:</span> <span class="font-medium text-slate-800">{{ p.approver.nama if p.approver else '-' }}</span></div>
+    </div>
+    {% if p.catatan %}<div class="mt-3 text-sm"><span class="text-slate-500">Catatan:</span> {{ p.catatan }}</div>{% endif %}
+    {% if p.alasan_tolak %}<div class="mt-3 text-sm bg-danger-50 border border-danger-200 rounded-lg p-3 text-danger-700"><strong>Alasan ditolak:</strong> {{ p.alasan_tolak }}</div>{% endif %}
+  </div>
+
+  {% set bisa_approve = p.status == 'diajukan' and (current_user.is_admin or (current_user.is_kepala and p.unit_id == current_user.unit_id and p.diajukan_oleh != current_user.id)) %}
+
+  {% if bisa_approve %}
+  {# Mode approval: tabel jadi form dengan input qty disetujui per baris #}
+  <form method="POST" action="{{ url_for('permintaan.approve', pid=p.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+      <div class="px-4 py-3 bg-primary-50 border-b border-primary-200 text-sm text-primary-800">
+        Sesuaikan qty yang disetujui per barang jika perlu (default = qty diminta), lalu klik Setujui di bawah.
+      </div>
+      <table class="w-full text-sm">
+        <thead class="bg-slate-50 text-slate-600 text-xs uppercase">
+          <tr>
+            <th class="text-left px-4 py-3 font-semibold">Barang</th>
+            <th class="text-right px-4 py-3 font-semibold">Qty Diminta</th>
+            <th class="text-right px-4 py-3 font-semibold w-32">Qty Disetujui</th>
+            <th class="text-right px-4 py-3 font-semibold">Stok Saat Ini</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          {% for d in p.details %}
+          <tr>
+            <td class="px-4 py-3 font-medium text-slate-800">{{ d.barang.nama }}</td>
+            <td class="px-4 py-3 text-right">{{ d.qty }} {{ d.barang.satuan.kode }}</td>
+            <td class="px-4 py-3 text-right">
+              <input type="hidden" name="detail_id[]" value="{{ d.id }}">
+              <input type="number" name="qty_disetujui[]" min="0" max="{{ d.qty }}" value="{{ d.qty }}"
+                     class="w-24 rounded-lg border border-slate-300 px-2 py-1.5 text-sm text-right focus:ring-2 focus:ring-primary-500">
+            </td>
+            <td class="px-4 py-3 text-right text-slate-600">{{ d.barang.stok }} {{ d.barang.satuan.kode }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <div class="px-4 py-4 border-t border-slate-200 flex justify-end">
+        <button type="submit" class="inline-flex items-center gap-2 bg-success-600 hover:bg-success-700 text-white text-sm font-medium px-5 py-2.5 rounded-lg transition">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+          Setujui
+        </button>
+      </div>
+    </div>
+  </form>
+
+  <div class="bg-white rounded-xl border border-slate-200 p-5">
+    <form method="POST" action="{{ url_for('permintaan.reject', pid=p.id) }}" class="flex flex-col sm:flex-row gap-2">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="text" name="alasan_tolak" placeholder="Alasan penolakan..." class="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-danger-500">
+      <button type="submit" class="inline-flex items-center justify-center gap-2 bg-danger-600 hover:bg-danger-700 text-white text-sm font-medium px-5 py-2.5 rounded-lg transition">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        Tolak Seluruh Permintaan
+      </button>
+    </form>
+  </div>
+
+  {% else %}
+  {# Mode tampilan biasa (read-only) #}
+  <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+    <table class="w-full text-sm">
+      <thead class="bg-slate-50 text-slate-600 text-xs uppercase">
+        <tr>
+          <th class="text-left px-4 py-3 font-semibold">Barang</th>
+          <th class="text-right px-4 py-3 font-semibold">Qty Diminta</th>
+          {% if p.status in ['disetujui', 'diproses', 'selesai'] %}
+          <th class="text-right px-4 py-3 font-semibold">Qty Disetujui Kaunit</th>
+          {% endif %}
+          {% if p.status in ['diproses', 'selesai'] %}
+          <th class="text-right px-4 py-3 font-semibold">Qty Diproses Admin</th>
+          {% endif %}
+          <th class="text-right px-4 py-3 font-semibold">Stok Saat Ini</th>
+          <th class="text-left px-4 py-3 font-semibold">Catatan</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        {% for d in p.details %}
+        <tr>
+          <td class="px-4 py-3 font-medium text-slate-800">{{ d.barang.nama }}</td>
+          <td class="px-4 py-3 text-right font-semibold">{{ d.qty }} {{ d.barang.satuan.kode }}</td>
+
+          {% if p.status in ['disetujui', 'diproses', 'selesai'] %}
+          <td class="px-4 py-3 text-right {% if d.qty_disetujui is not none and d.qty_disetujui < d.qty %}text-warning-600 font-semibold{% endif %}">
+            {{ d.qty_efektif }} {{ d.barang.satuan.kode }}
+          </td>
+          {% endif %}
+
+          {% if p.status in ['diproses', 'selesai'] %}
+          <td class="px-4 py-3 text-right {% if d.qty_diproses < d.qty_efektif %}text-warning-600 font-semibold{% else %}text-primary-700 font-semibold{% endif %}">
+            {{ d.qty_diproses }} {{ d.barang.satuan.kode }}
+          </td>
+          {% endif %}
+
+          <td class="px-4 py-3 text-right text-slate-600">{{ d.barang.stok }} {{ d.barang.satuan.kode }}</td>
+          <td class="px-4 py-3 text-slate-500 text-xs">{{ d.catatan or '-' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+
+  {% if current_user.is_kepala and p.unit_id == current_user.unit_id and p.diajukan_oleh == current_user.id and p.status == 'diajukan' %}
+  <div class="bg-slate-50 border border-slate-200 rounded-lg p-4 text-sm text-slate-600">
+    Permintaan ini Anda ajukan sendiri, sehingga menunggu diproses langsung oleh Admin Gudang.
+  </div>
+  {% endif %}
+
+  {% if p.status == 'diajukan' and p.diajukan_oleh == current_user.id %}
+  <form method="POST" action="{{ url_for('permintaan.cancel', pid=p.id) }}" onsubmit="return confirm('Batalkan permintaan ini?')">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button type="submit" class="text-sm text-danger-600 hover:text-danger-700 font-medium">Batalkan Permintaan</button>
+  </form>
+  {% endif %}
+
+  {% if p.status == 'disetujui' and current_user.is_admin %}
+  <form method="POST" action="{{ url_for('permintaan.proses', pid=p.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+      <div class="px-4 py-3 bg-primary-50 border-b border-primary-200 text-sm text-primary-800">
+        Sebelum barang dikeluarkan, cek dan sesuaikan qty final di bawah jika perlu (misalnya kalau stok fisik ternyata tidak cukup). Angka ini tidak bisa melebihi qty yang sudah disetujui Kepala Unit.
+      </div>
+      <table class="w-full text-sm">
+        <thead class="bg-slate-50 text-slate-600 text-xs uppercase">
+          <tr>
+            <th class="text-left px-4 py-3 font-semibold">Barang</th>
+            <th class="text-right px-4 py-3 font-semibold">Qty Disetujui Kaunit</th>
+            <th class="text-right px-4 py-3 font-semibold w-32">Qty Dikeluarkan</th>
+            <th class="text-right px-4 py-3 font-semibold">Stok Saat Ini</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          {% for d in p.details %}
+          <tr>
+            <td class="px-4 py-3 font-medium text-slate-800">{{ d.barang.nama }}</td>
+            <td class="px-4 py-3 text-right">{{ d.qty_efektif }} {{ d.barang.satuan.kode }}</td>
+            <td class="px-4 py-3 text-right">
+              <input type="hidden" name="detail_id[]" value="{{ d.id }}">
+              <input type="number" name="qty_final[]" min="0" max="{{ d.qty_efektif }}" value="{{ d.qty_efektif }}"
+                     class="w-24 rounded-lg border border-slate-300 px-2 py-1.5 text-sm text-right focus:ring-2 focus:ring-primary-500">
+            </td>
+            <td class="px-4 py-3 text-right {% if d.qty_efektif > d.barang.stok %}text-danger-600 font-semibold{% else %}text-slate-600{% endif %}">
+              {{ d.barang.stok }} {{ d.barang.satuan.kode }}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <div class="px-4 py-4 border-t border-slate-200 flex items-center justify-between flex-wrap gap-3">
+        <p class="text-sm text-slate-600">Klik tombol untuk memotong stok sesuai qty final di atas.</p>
+        <button type="submit" class="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium px-5 py-2.5 rounded-lg transition">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          Proses & Keluarkan Barang
+        </button>
+      </div>
+    </div>
+  </form>
+  {% endif %}
+
+  {% if p.status == 'diproses' and current_user.is_admin %}
+  <div class="bg-white rounded-xl border border-slate-200 p-5">
+    <form method="POST" action="{{ url_for('permintaan.selesai', pid=p.id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="flex items-center justify-between flex-wrap gap-3">
+        <p class="text-sm text-slate-600">Barang telah dikeluarkan. Tandai sebagai selesai.</p>
+        <button type="submit" class="inline-flex items-center gap-2 bg-success-600 hover:bg-success-700 text-white text-sm font-medium px-5 py-2.5 rounded-lg transition">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+          Tandai Selesai
+        </button>
+      </div>
+    </form>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

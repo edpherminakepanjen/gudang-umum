@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% from "macros.html" import status_badge %}
+{% block title %}Permintaan Barang{% endblock %}
+{% block page_title %}{% if current_user.is_admin %}Permintaan & Distribusi{% elif current_user.is_kepala %}Permintaan Unit{% else %}Permintaan Saya{% endif %}{% endblock %}
+
+{% block content %}
+<div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+  <div class="px-5 py-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+    <div class="flex flex-wrap items-center gap-2">
+      <a href="{{ url_for('permintaan.index') }}" class="text-sm px-3 py-1.5 rounded-lg {% if not sf %}bg-primary-100 text-primary-700 font-medium{% else %}text-slate-600 hover:bg-slate-100{% endif %}">Semua</a>
+      {% for val, label in status_list %}
+      <a href="?status={{ val }}" class="text-sm px-3 py-1.5 rounded-lg {% if sf==val %}bg-primary-100 text-primary-700 font-medium{% else %}text-slate-600 hover:bg-slate-100{% endif %}">{{ label }}</a>
+      {% endfor %}
+    </div>
+    <a href="{{ url_for('permintaan.create') }}" class="inline-flex items-center gap-1.5 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium px-3 py-1.5 rounded-lg transition shrink-0">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+      Ajukan Permintaan
+    </a>
+  </div>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead class="bg-slate-50 text-slate-600 text-xs uppercase">
+        <tr>
+          <th class="text-left px-4 py-3 font-semibold">No. Permintaan</th>
+          <th class="text-left px-4 py-3 font-semibold">Tanggal</th>
+          {% if current_user.is_admin %}<th class="text-left px-4 py-3 font-semibold">Unit</th>{% endif %}
+          <th class="text-left px-4 py-3 font-semibold">Diajukan oleh</th>
+          <th class="text-right px-4 py-3 font-semibold">Items</th>
+          <th class="text-center px-4 py-3 font-semibold">Status</th>
+          <th class="text-right px-4 py-3 font-semibold">Aksi</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        {% for p in items %}
+        <tr class="hover:bg-slate-50 transition">
+          <td class="px-4 py-3 font-mono text-xs font-medium text-slate-700">{{ p.no_permintaan }}</td>
+          <td class="px-4 py-3 text-slate-600">{{ fmt_date(p.tanggal) }}</td>
+          {% if current_user.is_admin %}<td class="px-4 py-3 text-slate-600">{{ p.unit.nama }}</td>{% endif %}
+          <td class="px-4 py-3 text-slate-600">{{ p.pengaju.nama }}</td>
+          <td class="px-4 py-3 text-right text-slate-600">{{ p.details|length }}</td>
+          <td class="px-4 py-3 text-center">{{ status_badge(p.status_label, p.status_color) }}</td>
+          <td class="px-4 py-3 text-right">
+            <a href="{{ url_for('permintaan.detail', pid=p.id) }}" class="text-primary-600 hover:text-primary-700 text-xs font-medium">Lihat</a>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="{{ 7 if current_user.is_admin else 6 }}" class="px-4 py-8 text-center text-slate-400">Belum ada permintaan.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

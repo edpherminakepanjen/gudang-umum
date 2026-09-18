@@ -1,0 +1,70 @@
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+@page { size: A4 landscape; margin: 1.5cm; }
+body { font-family: Helvetica, sans-serif; font-size: 10px; color: #1e293b; }
+.header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #1e3a8a; padding-bottom: 10px; }
+.header h1 { font-size: 16px; color: #1e3a8a; margin: 0; }
+.header h2 { font-size: 12px; margin: 4px 0 0; }
+.header p { font-size: 9px; color: #64748b; margin: 2px 0 0; }
+table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+th { background: #1e3a8a; color: white; padding: 6px 8px; text-align: left; font-size: 9px; }
+td { padding: 5px 8px; border-bottom: 1px solid #e2e8f0; }
+tr:nth-child(even) { background: #f8fafc; }
+.right { text-align: right; }
+.center { text-align: center; }
+.total { background: #eff6ff; font-weight: bold; font-size: 11px; }
+.signature { margin-top: 30px; display: flex; justify-content: space-between; }
+.sig-block { text-align: center; font-size: 10px; }
+.sig-block p { margin: 0; }
+.sig-space { height: 60px; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>RS HERMINA KEPANJEN</h1>
+  <h2>LAPORAN STOK BARANG GUDANG UMUM</h2>
+  <p>Per Tanggal: {{ fmt_date_full(tanggal) }}</p>
+</div>
+<table>
+  <thead>
+    <tr>
+      <th>No</th><th>Kode</th><th>Nama Barang</th><th>Kategori</th><th>Satuan</th>
+      <th class="right">Harga Satuan</th><th class="right">Stok</th><th class="right">Min</th>
+      <th>Status</th><th class="right">Nilai Stok</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for b in items %}
+    <tr>
+      <td>{{ loop.index }}</td>
+      <td>{{ b.kode }}</td>
+      <td>{{ b.nama }}</td>
+      <td>{{ b.kategori.nama }}</td>
+      <td>{{ b.satuan.kode }}</td>
+      <td class="right">{{ fmt_rupiah(b.harga_satuan) }}</td>
+      <td class="right">{{ b.stok }}</td>
+      <td class="right">{{ b.stok_min }}</td>
+      <td>{{ b.status_stok|capitalize }}</td>
+      <td class="right">{{ fmt_rupiah(b.nilai_stok) }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+  <tfoot>
+    <tr class="total">
+      <td colspan="9" class="right">TOTAL NILAI STOK</td>
+      <td class="right">{{ fmt_rupiah(total_nilai) }}</td>
+    </tr>
+  </tfoot>
+</table>
+<div class="signature">
+  <div class="sig-block">
+    <p>Dibuat oleh,</p><div class="sig-space"></div><p>Admin Gudang Umum</p>
+  </div>
+  <div class="sig-block">
+    <p>Disetujui oleh,</p><div class="sig-space"></div><p>Kepala RS Hermina Kepanjen</p>
+  </div>
+</div>
+</body>
+</html>

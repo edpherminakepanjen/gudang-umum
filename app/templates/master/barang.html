@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+{% from "macros.html" import stok_badge %}
+{% block title %}Data Barang{% endblock %}
+{% block page_title %}Data Barang{% endblock %}
+
+{% block content %}
+<div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+  <div class="px-5 py-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+    <div class="flex flex-wrap items-center gap-2">
+      <form method="GET" class="flex flex-wrap items-center gap-2">
+        <input type="text" name="q" value="{{ q }}" placeholder="Cari kode/nama..."
+               class="rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 w-48">
+        <select name="kategori" class="rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:ring-2 focus:ring-primary-500">
+          <option value="">Semua Kategori</option>
+          {% for k in kategoris %}
+          <option value="{{ k.id }}" {% if kat==k.id %}selected{% endif %}>{{ k.nama }}</option>
+          {% endfor %}
+        </select>
+        <select name="status" class="rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:ring-2 focus:ring-primary-500">
+          <option value="aktif" {% if status_f=='aktif' %}selected{% endif %}>Aktif Saja</option>
+          <option value="nonaktif" {% if status_f=='nonaktif' %}selected{% endif %}>Nonaktif Saja</option>
+          <option value="semua" {% if status_f=='semua' %}selected{% endif %}>Semua Status</option>
+        </select>
+        <button type="submit" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium px-3 py-1.5 rounded-lg">Filter</button>
+        {% if q or kat or status_f != 'aktif' %}
+        <a href="{{ url_for('master.barang_index') }}" class="text-sm text-slate-500 hover:text-slate-700">Reset</a>
+        {% endif %}
+      </form>
+    </div>
+    {% if current_user.is_admin %}
+    <div class="flex items-center gap-2 shrink-0">
+      <a href="{{ url_for('master.barang_import') }}" class="inline-flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium px-3 py-1.5 rounded-lg transition">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+        Import Excel
+      </a>
+      <button onclick="openBarangModal()" class="inline-flex items-center gap-1.5 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium px-3 py-1.5 rounded-lg transition">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+        Tambah Barang
+      </button>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead class="bg-slate-50 text-slate-600 text-xs uppercase">
+        <tr>
+          <th class="text-left px-4 py-3 font-semibold">Kode</th>
+          <th class="text-left px-4 py-3 font-semibold">Nama</th>
+          <th class="text-left px-4 py-3 font-semibold">Kategori</th>
+          <th class="text-left px-4 py-3 font-semibold">Satuan</th>
+          <th class="text-right px-4 py-3 font-semibold">Harga</th>
+          <th class="text-right px-4 py-3 font-semibold">Stok</th>
+          <th class="text-right px-4 py-3 font-semibold">Min</th>
+          <th class="text-center px-4 py-3 font-semibold">Status Stok</th>
+          <th class="text-center px-4 py-3 font-semibold">Aktif</th>
+          {% if current_user.is_admin %}<th class="text-right px-4 py-3 font-semibold">Aksi</th>{% endif %}
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        {% for b in items %}
+        <tr class="hover:bg-slate-50 transition {% if not b.is_aktif %}opacity-60{% endif %}">
+          <td class="px-4 py-3 font-mono text-xs font-medium text-slate-700">{{ b.kode }}</td>
+          <td class="px-4 py-3 font-medium text-slate-800">{{ b.nama }}</td>
+          <td class="px-4 py-3 text-slate-600">{{ b.kategori.nama }}</td>
+          <td class="px-4 py-3 text-slate-600">{{ b.satuan.kode }}</td>
+          <td class="px-4 py-3 text-right text-slate-600">{{ fmt_rupiah(b.harga_satuan) }}</td>
+          <td class="px-4 py-3 text-right font-semibold {% if b.stok<=0 %}text-danger-600{% elif b.stok<=b.stok_min %}text-warning-600{% else %}text-slate-800{% endif %}">{{ b.stok }}</td>
+          <td class="px-4 py-3 text-right text-slate-400">{{ b.stok_min }}</td>
+          <td class="px-4 py-3 text-center">{{ stok_badge(b.status_stok) }}</td>
+          <td class="px-4 py-3 text-center">
+            {% if b.is_aktif %}
+            <span class="inline-flex rounded-full bg-success-100 text-success-700 px-2 py-0.5 text-xs font-medium">Aktif</span>
+            {% else %}
+            <span class="inline-flex rounded-full bg-slate-200 text-slate-600 px-2 py-0.5 text-xs font-medium">Nonaktif</span>
+            {% endif %}
+          </td>
+          {% if current_user.is_admin %}
+          <td class="px-4 py-3 text-right whitespace-nowrap">
+            <button onclick='editBarang({"id":{{ b.id }},"kode":"{{ b.kode|e }}","nama":"{{ b.nama|e }}","kategori_id":{{ b.kategori_id }},"satuan_id":{{ b.satuan_id }},"harga_satuan":{{ b.harga_satuan|float }},"stok":{{ b.stok }},"stok_min":{{ b.stok_min }},"keterangan":"{{ b.keterangan|default('', true)|e }}"})' class="text-primary-600 hover:text-primary-700 text-xs font-medium mr-2">Edit</button>
+            <form method="POST" action="{{ url_for('master.barang_toggle', bid=b.id) }}?status={{ status_f }}" class="inline"
+                  onsubmit="return confirm('{% if b.is_aktif %}Nonaktifkan{% else %}Aktifkan kembali{% endif %} barang {{ b.nama|e }}?')">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="{% if b.is_aktif %}text-danger-600 hover:text-danger-700{% else %}text-success-600 hover:text-success-700{% endif %} text-xs font-medium">
+                {% if b.is_aktif %}Nonaktifkan{% else %}Aktifkan{% endif %}
+              </button>
+            </form>
+          </td>
+          {% endif %}
+        </tr>
+        {% else %}
+        <tr><td colspan="{{ 10 if current_user.is_admin else 9 }}" class="px-4 py-8 text-center text-slate-400">Tidak ada barang.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="px-4 py-3 border-t border-slate-200 text-sm text-slate-500">
+    Total: {{ items|length }} jenis barang
+  </div>
+</div>
+
+{# Modal Barang #}
+<div id="modalBarang" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40 px-4 overflow-y-auto">
+  <div class="bg-white rounded-xl shadow-xl w-full max-w-lg my-8">
+    <div class="px-5 py-4 border-b border-slate-200"><h3 class="font-semibold text-slate-800" id="brgTitle">Tambah Barang</h3></div>
+    <form method="POST" id="formBarang" class="p-5 space-y-4">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1.5">Kode</label>
+          <input type="text" name="kode" id="brg_kode" required class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500" placeholder="ATK-001">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1.5">Nama</label>
+          <input type="text" name="nama" id="brg_nama" required class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500" placeholder="Kertas A4 70gsm">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1.5">Kategori</label>
+          <select name="kategori_id" id="brg_kat" required class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500">
+            {% for k in kategoris %}<option value="{{ k.id }}">{{ k.nama }}</option>{% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1.5">Satuan</label>
+          <select name="satuan_id" id="brg_sat" required class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500">
+            {% for s in satuans %}<option value="{{ s.id }}">{{ s.kode }} — {{ s.nama }}</option>{% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1.5">Harga Satuan (Rp)</label>
+          <input type="number" name="harga_satuan" id="brg_harga" min="0" step="100" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500" value="0">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1.5">Stok Saat Ini</label>
+          <input type="number" name="stok" id="brg_stok" min="0" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500" value="0">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1.5">Stok Minimum</label>
+          <input type="number" name="stok_min" id="brg_min" min="0" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500" value="0">
+        </div>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1.5">Keterangan</label>
+        <textarea name="keterangan" id="brg_ket" rows="2" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500"></textarea>
+      </div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button type="button" onclick="closeModal('modalBarang')" class="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg">Batal</button>
+        <button type="submit" class="px-4 py-2 text-sm font-medium bg-primary-600 hover:bg-primary-700 text-white rounded-lg">Simpan</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function openModal(id){const m=document.getElementById(id);m.classList.remove('hidden');m.classList.add('flex')}
+function closeModal(id){const m=document.getElementById(id);m.classList.add('hidden');m.classList.remove('flex')}
+
+function openBarangModal(){
+  document.getElementById('brgTitle').textContent='Tambah Barang';
+  document.getElementById('formBarang').reset();
+  document.getElementById('formBarang').action="{{ url_for('master.barang_create') }}";
+  document.getElementById('brg_kode').disabled=false;
+  openModal('modalBarang');
+}
+
+function editBarang(b){
+  document.getElementById('brgTitle').textContent='Edit Barang';
+  document.getElementById('brg_kode').value=b.kode; document.getElementById('brg_kode').disabled=true;
+  document.getElementById('brg_nama').value=b.nama;
+  document.getElementById('brg_kat').value=b.kategori_id;
+  document.getElementById('brg_sat').value=b.satuan_id;
+  document.getElementById('brg_harga').value=b.harga_satuan;
+  document.getElementById('brg_stok').value=b.stok;
+  document.getElementById('brg_min').value=b.stok_min;
+  document.getElementById('brg_ket').value=b.keterangan||'';
+  document.getElementById('formBarang').action="{{ url_for('master.barang_edit', bid=0) }}".replace('/0','/'+b.id);
+  openModal('modalBarang');
+}
+</script>
+{% endblock %}

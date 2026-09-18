@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% from "macros.html" import status_badge %}
+{% block title %}Stok Opname{% endblock %}
+{% block page_title %}Stok Opname{% endblock %}
+
+{% block content %}
+<div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+  <div class="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
+    <h3 class="font-semibold text-slate-800">Riwayat Sesi Opname</h3>
+    <form method="POST" action="{{ url_for('opname.create') }}" onsubmit="return confirm('Mulai sesi opname baru? Sistem akan mengambil snapshot stok semua barang aktif saat ini.')">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit" class="inline-flex items-center gap-1.5 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium px-3 py-1.5 rounded-lg transition">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+        Mulai Opname Baru
+      </button>
+    </form>
+  </div>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead class="bg-slate-50 text-slate-600 text-xs uppercase">
+        <tr>
+          <th class="text-left px-4 py-3 font-semibold">No. Opname</th>
+          <th class="text-left px-4 py-3 font-semibold">Tanggal</th>
+          <th class="text-left px-4 py-3 font-semibold">Dibuat oleh</th>
+          <th class="text-right px-4 py-3 font-semibold">Jumlah Barang</th>
+          <th class="text-right px-4 py-3 font-semibold">Selisih Ditemukan</th>
+          <th class="text-center px-4 py-3 font-semibold">Status</th>
+          <th class="text-right px-4 py-3 font-semibold">Aksi</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        {% for o in items %}
+        <tr class="hover:bg-slate-50 transition">
+          <td class="px-4 py-3 font-mono text-xs font-medium text-slate-700">{{ o.no_opname }}</td>
+          <td class="px-4 py-3 text-slate-600">{{ fmt_date(o.tanggal) }}</td>
+          <td class="px-4 py-3 text-slate-600">{{ o.pembuat.nama }}</td>
+          <td class="px-4 py-3 text-right text-slate-600">{{ o.details|length }}</td>
+          <td class="px-4 py-3 text-right">
+            {% if o.status == 'selesai' %}
+            <span class="{% if o.jumlah_selisih > 0 %}text-warning-600 font-semibold{% else %}text-slate-400{% endif %}">{{ o.jumlah_selisih }}</span>
+            {% else %}
+            <span class="text-slate-400">-</span>
+            {% endif %}
+          </td>
+          <td class="px-4 py-3 text-center">
+            {% if o.status == 'draft' %}
+            {{ status_badge('Draft (' + o.jumlah_belum_dihitung|string + ' belum dihitung)', 'amber') }}
+            {% else %}
+            {{ status_badge('Selesai', 'emerald') }}
+            {% endif %}
+          </td>
+          <td class="px-4 py-3 text-right">
+            {% if o.status == 'draft' %}
+            <a href="{{ url_for('opname.form', oid=o.id) }}" class="text-primary-600 hover:text-primary-700 text-xs font-medium">Lanjutkan</a>
+            {% else %}
+            <a href="{{ url_for('opname.detail', oid=o.id) }}" class="text-primary-600 hover:text-primary-700 text-xs font-medium">Lihat</a>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" class="px-4 py-8 text-center text-slate-400">Belum ada sesi opname.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
