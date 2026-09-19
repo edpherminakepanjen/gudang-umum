@@ -28,7 +28,7 @@
           <td class="px-4 py-3 font-medium text-slate-800">{{ u.nama }}</td>
           <td class="px-4 py-3 text-slate-500 text-xs">{{ u.keterangan or '-' }}</td>
           <td class="px-4 py-3 text-right whitespace-nowrap">
-            <button onclick="editUnit({{ u.id }}, '{{ u.nama|e }}', '{{ u.keterangan|e }}')" class="text-primary-600 hover:text-primary-700 text-xs font-medium mr-2">Edit</button>
+            <button onclick="editUnit({{ u.id }}, '{{ u.kode|e }}', '{{ u.nama|e }}', '{{ u.keterangan|e }}')" class="text-primary-600 hover:text-primary-700 text-xs font-medium mr-2">Edit</button>
             <form method="POST" action="{{ url_for('master.unit_delete', uid=u.id) }}" class="inline"
                   onsubmit="return confirm('Hapus unit {{ u.nama|e }}?')">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -79,9 +79,9 @@ function openUnitModal(){
   document.getElementById('unit_kode').disabled=false;
   openModal('modalUnit');
 }
-function editUnit(id,nama,ket){
+function editUnit(id,kode,nama,ket){
   document.getElementById('unitTitle').textContent='Edit Unit';
-  document.getElementById('unit_kode').disabled=true;
+  document.getElementById('unit_kode').value=kode; document.getElementById('unit_kode').disabled=true;
   document.getElementById('unit_nama').value=nama;
   document.getElementById('unit_ket').value=ket;
   document.getElementById('formUnit').action="{{ url_for('master.unit_edit', uid=0) }}".replace('/0','/'+id);

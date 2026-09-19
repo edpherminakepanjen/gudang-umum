@@ -31,7 +31,7 @@
             <td class="px-4 py-3 font-medium text-slate-800">{{ k.nama }}</td>
             <td class="px-4 py-3 text-slate-500 text-xs">{{ k.keterangan or '-' }}</td>
             <td class="px-4 py-3 text-right">
-              <button onclick="editKat({{ k.id }}, '{{ k.nama|e }}', '{{ k.keterangan|e }}')"
+              <button onclick="editKat({{ k.id }}, '{{ k.kode|e }}', '{{ k.nama|e }}', '{{ k.keterangan|e }}')"
                       class="text-primary-600 hover:text-primary-700 text-xs font-medium mr-2">Edit</button>
               <form method="POST" action="{{ url_for('master.kategori_delete', kid=k.id) }}" class="inline"
                     onsubmit="return confirm('Hapus kategori {{ k.nama }}?')">
@@ -72,7 +72,7 @@
             <td class="px-4 py-3 font-mono text-xs font-medium text-slate-700">{{ s.kode }}</td>
             <td class="px-4 py-3 font-medium text-slate-800">{{ s.nama }}</td>
             <td class="px-4 py-3 text-right">
-              <button onclick="editSat({{ s.id }}, '{{ s.nama|e }}')"
+              <button onclick="editSat({{ s.id }}, '{{ s.kode|e }}', '{{ s.nama|e }}')"
                       class="text-primary-600 hover:text-primary-700 text-xs font-medium mr-2">Edit</button>
               <form method="POST" action="{{ url_for('master.satuan_delete', sid=s.id) }}" class="inline"
                     onsubmit="return confirm('Hapus satuan {{ s.nama }}?')">
@@ -94,7 +94,7 @@
 <div id="modalKat" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40 px-4">
   <div class="bg-white rounded-xl shadow-xl w-full max-w-md">
     <div class="px-5 py-4 border-b border-slate-200"><h3 class="font-semibold text-slate-800" id="modalKatTitle">Tambah Kategori</h3></div>
-    <form method="POST" id="formKat" class="p-5 space-y-4">
+    <form method="POST" id="formKat" class="p-5 space-y-4" action="{{ url_for('master.kategori_create') }}">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <input type="hidden" name="edit_id" id="kat_edit_id">
       <div>
@@ -121,7 +121,7 @@
 <div id="modalSat" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40 px-4">
   <div class="bg-white rounded-xl shadow-xl w-full max-w-md">
     <div class="px-5 py-4 border-b border-slate-200"><h3 class="font-semibold text-slate-800" id="modalSatTitle">Tambah Satuan</h3></div>
-    <form method="POST" id="formSat" class="p-5 space-y-4">
+    <form method="POST" id="formSat" class="p-5 space-y-4" action="{{ url_for('master.satuan_create') }}">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <input type="hidden" name="edit_id" id="sat_edit_id">
       <div>
@@ -144,30 +144,34 @@
 function openModal(id){const m=document.getElementById(id);m.classList.remove('hidden');m.classList.add('flex')}
 function closeModal(id){const m=document.getElementById(id);m.classList.add('hidden');m.classList.remove('flex')}
 
-function editKat(id,nama,ket){
+function editKat(id,kode,nama,ket){
   document.getElementById('modalKatTitle').textContent='Edit Kategori';
   document.getElementById('kat_edit_id').value=id;
-  document.getElementById('kat_kode').value=''; document.getElementById('kat_kode').disabled=true;
+  document.getElementById('kat_kode').value=kode; document.getElementById('kat_kode').disabled=true;
   document.getElementById('kat_nama').value=nama;
   document.getElementById('kat_ket').value=ket;
   document.getElementById('formKat').action="{{ url_for('master.kategori_edit', kid=0) }}".replace('/0','/'+id);
   openModal('modalKat');
 }
-function editSat(id,nama){
+function editSat(id,kode,nama){
   document.getElementById('modalSatTitle').textContent='Edit Satuan';
   document.getElementById('sat_edit_id').value=id;
-  document.getElementById('sat_kode').value=''; document.getElementById('sat_kode').disabled=true;
+  document.getElementById('sat_kode').value=kode; document.getElementById('sat_kode').disabled=true;
   document.getElementById('sat_nama').value=nama;
   document.getElementById('formSat').action="{{ url_for('master.satuan_edit', sid=0) }}".replace('/0','/'+id);
   openModal('modalSat');
 }
+// Simpan URL create asli, supaya bisa dikembalikan lagi setelah form dipakai untuk edit
+document.getElementById('formKat').dataset.createUrl = "{{ url_for('master.kategori_create') }}";
+document.getElementById('formSat').dataset.createUrl = "{{ url_for('master.satuan_create') }}";
+
 // Reset on open
 document.querySelectorAll('button[onclick^="openModal"]').forEach(b=>{
   b.addEventListener('click',()=>{
     if(b.textContent.trim()==='Tambah'){
       const mid=b.getAttribute('onclick').match(/'(\w+)'/)[1];
       const f=document.getElementById('form'+mid.replace('modal',''));
-      if(f){f.reset();f.action=f.dataset.orig||f.action;}
+      if(f){f.reset(); f.action=f.dataset.createUrl;}
       if(mid==='modalKat'){document.getElementById('kat_kode').disabled=false;document.getElementById('modalKatTitle').textContent='Tambah Kategori'}
       if(mid==='modalSat'){document.getElementById('sat_kode').disabled=false;document.getElementById('modalSatTitle').textContent='Tambah Satuan'}
     }
